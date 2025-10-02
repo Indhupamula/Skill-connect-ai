@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Learner Dashboard | SkillConnect AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Learner Dashboard</h1>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </header>
+
+    <section>
+        <h2>Browse Skills</h2>
+        <div id="recommendations">
+            {% for skill in skills %}
+                <div>
+                    <strong>{{ skill.title }}</strong> by {{ skill.name }} 
+                    <button onclick="bookSession({{ skill.id }})">Book Session</button>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section>
+        <h2>Chatbot</h2>
+        <div id="chat-window"></div>
+        <input type="text" id="chat-input" placeholder="Ask AI about skills or sessions">
+        <button onclick="sendMessage()">Send</button>
+    </section>
+</body>
+</html>
