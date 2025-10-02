@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot - SkillConnect AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</head>
+<body>
+    <header>
+        <h1>Chatbot</h1>
+        <nav>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <main>
+        <div id="chat-window" style="height:400px; overflow:auto; border:1px solid #ccc; padding:10px;"></div>
+        <input type="text" id="chat-input" placeholder="Ask something...">
+        <button onclick="sendMessage()">Send</button>
+    </main>
+</body>
+</html>
