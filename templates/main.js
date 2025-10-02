@@ -57,3 +57,15 @@ function sendMessage() {
 
     input.value = '';
 }
+function bookSession(skillId) {
+    fetch(`/pay/${skillId}`, { method: 'POST' })
+    .then(res => res.blob())
+    .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Booking QR Code';
+        document.body.appendChild(img);
+    };
+}
+
