@@ -1,146 +1,153 @@
-from flask import Flask, render_template, request, redirect, session, send_file
+from flask import Flask, render_template, request, redirect, session, jsonify, flash, url_for
 from flask_mysqldb import MySQL
-import bcrypt
 import qrcode
-from io import BytesIO
-import openai
+import os
+import datetime
+import json
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = "supersecretkey"
 
 # MySQL configuration
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'your_password'
-app.config['MYSQL_DB'] = 'skillconnect_ai'
+app.config['MYSQL_PASSWORD'] = ''
+app.config['MYSQL_DB'] = 'skillconnect'
 mysql = MySQL(app)
 
-# OpenAI API key
-openai.api_key = "YOUR_API_KEY"
-
-# Home
+# ---------------- Home & Auth ----------------
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Signup
-@app.route('/signup', methods=['GET','POST'])
-def signup():
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password'].encode('utf-8')
-        role = request.form['role']
-        hashed = bcrypt.hashpw(password, bcrypt.gensalt())
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO users(name,email,password,role) VALUES(%s,%s,%s,%s)", (name,email,hashed,role))
-        mysql.connection.commit()
-        cur.close()
-        return redirect('/login')
-    return render_template('signup.html')
-
-# Login
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
-        password = request.form['password'].encode('utf-8')
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM users WHERE email=%s", [email])
-        user = cur.fetchone()
-        cur.close()
-        if user and bcrypt.checkpw(password, user[3].encode('utf-8')):
+        password = request.form['password']
+        cursor = mysql.connection.cursor()
+        cursor.execute("SELECT * FROM users WHERE email=%s AND password=%s", (email, password))
+        user = cursor.fetchone()
+        cursor.close()
+        if user:
             session['user_id'] = user[0]
             session['role'] = user[4]
             return redirect('/dashboard')
-        else:
-            return "Invalid credentials"
+        flash("Invalid credentials","danger")
     return render_template('login.html')
 
-# Logout
+@app.route('/signup', methods=['GET','POST'])
+def signup():
+    if request.method=='POST':
+        name = request.form['name']
+        email = request.form['email']
+        password = request.form['password']
+        cursor = mysql.connection.cursor()
+        cursor.execute("INSERT INTO users(name,email,password) VALUES(%s,%s,%s)", (name,email,password))
+        mysql.connection.commit()
+        cursor.close()
+        flash("Signup successful! Please login","success")
+        return redirect('/login')
+    return render_template('signup.html')
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/')
 
-# Dashboard
+# ---------------- Dashboard ----------------
 @app.route('/dashboard')
 def dashboard():
-    if 'user_id' in session:
-        return render_template('dashboard.html', role=session['role'])
-    return redirect('/login')
-
-# Add Skill
-@app.route('/add_skill', methods=['GET','POST'])
-def add_skill():
-    if 'user_id' not in session or session['role'] != 'skill_owner':
+    if 'user_id' not in session:
         return redirect('/login')
-    if request.method == 'POST':
-        title = request.form['title']
-        description = request.form['description']
-        user_id = session['user_id']
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO skills(user_id,title,description) VALUES(%s,%s,%s)", (user_id,title,description))
-        mysql.connection.commit()
-        cur.close()
-        return redirect('/dashboard')
-    return render_template('add_skill.html')
+    user_id = session['user_id']
+    cursor = mysql.connection.cursor()
+    # Learner Overview
+    cursor.execute("SELECT COUNT(*), SUM(price) FROM bookings WHERE user_id=%s AND status='confirmed'", (user_id,))
+    total_sessions, total_spent = cursor.fetchone()
+    cursor.execute("SELECT skill_id FROM bookings WHERE user_id=%s", (user_id,))
+    skills_learned = cursor.fetchall()
+    cursor.close()
+    return render_template('dashboard.html', total_sessions=total_sessions or 0, total_spent=total_spent or 0, skills_learned=len(skills_learned))
 
-# Add Event
-@app.route('/add_event/<int:skill_id>', methods=['GET','POST'])
-def add_event(skill_id):
-    if 'user_id' not in session or session['role'] != 'skill_owner':
+# ---------------- Browse Skills ----------------
+@app.route('/skills')
+def browse_skills():
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT s.id, s.title, s.category, s.price, s.rating, u.name, u.experience_years FROM skills s JOIN users u ON s.owner_id=u.id")
+    skills = cursor.fetchall()
+    cursor.close()
+    return render_template('browse_skills.html', skills=skills)
+
+@app.route('/book/<int:skill_id>', methods=['POST'])
+def book_skill(skill_id):
+    if 'user_id' not in session:
+        return jsonify({'error':'login required'})
+    user_id = session['user_id']
+    qr_path = f'static/qr/{skill_id}_{user_id}.png'
+    qr = qrcode.make(f'Booking: Skill {skill_id} for User {user_id}')
+    qr.save(qr_path)
+    cursor = mysql.connection.cursor()
+    cursor.execute("INSERT INTO bookings(user_id, skill_id, status, qr_code_path) VALUES(%s,%s,'confirmed',%s)", (user_id, skill_id, qr_path))
+    mysql.connection.commit()
+    cursor.close()
+    return jsonify({'qr': qr_path})
+
+# ---------------- Events ----------------
+@app.route('/events')
+def events():
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT e.id, e.title, e.date, e.time, e.duration, e.location, e.price, e.max_participants, e.skills, u.name FROM events e JOIN users u ON e.instructor_id=u.id")
+    events = cursor.fetchall()
+    cursor.close()
+    return render_template('events.html', events=events)
+
+@app.route('/create_event', methods=['GET','POST'])
+def create_event():
+    if 'user_id' not in session or session['role']!='skill_owner':
         return redirect('/login')
-    if request.method == 'POST':
+    if request.method=='POST':
         title = request.form['title']
         description = request.form['description']
         date = request.form['date']
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO events(skill_id,title,description,date) VALUES(%s,%s,%s,%s)", (skill_id,title,description,date))
+        time = request.form['time']
+        duration = request.form['duration']
+        location = request.form['location']
+        price = request.form['price']
+        max_participants = request.form['max_participants']
+        skills = request.form['skills']
+        instructor_id = session['user_id']
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            INSERT INTO events(title,description,date,time,duration,location,price,max_participants,skills,instructor_id)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """,(title,description,date,time,duration,location,price,max_participants,skills,instructor_id))
         mysql.connection.commit()
-        cur.close()
-        return redirect('/dashboard')
-    return render_template('add_event.html', skill_id=skill_id)
+        cursor.close()
+        flash("Event created successfully!","success")
+        return redirect('/events')
+    return render_template('create_event.html')
 
-# Booking + QR Code
-@app.route('/book/<int:event_id>', methods=['POST'])
-def book_event(event_id):
-    if 'user_id' not in session or session['role'] != 'learner':
-        return {"message":"Login as learner first"}, 401
-    learner_id = session['user_id']
-    cur = mysql.connection.cursor()
-    cur.execute("INSERT INTO bookings(event_id,learner_id,status,payment_status) VALUES(%s,%s,'pending','pending')", (event_id,learner_id))
-    mysql.connection.commit()
-    cur.close()
-    
-    qr_data = f"Event:{event_id} Learner:{learner_id}"
-    qr_img = qrcode.make(qr_data)
-    buf = BytesIO()
-    qr_img.save(buf)
-    buf.seek(0)
-    return send_file(buf, mimetype='image/png')
+# ---------------- Instructor Profile ----------------
+@app.route('/profile/<int:instructor_id>')
+def profile(instructor_id):
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM users WHERE id=%s", (instructor_id,))
+    instructor = cursor.fetchone()
+    cursor.execute("SELECT * FROM skills WHERE owner_id=%s", (instructor_id,))
+    skills = cursor.fetchall()
+    cursor.close()
+    return render_template('profile.html', instructor=instructor, skills=skills)
 
-# AI Chatbot
+# ---------------- Chatbot ----------------
 @app.route('/chatbot', methods=['POST'])
 def chatbot():
     message = request.json['message']
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role":"user","content":message}]
-    )
-    return {"reply": response['choices'][0]['message']['content']}
+    # Basic AI simulation for demo
+    reply = f"Echo: {message}"  
+    return jsonify({'reply': reply})
 
-# Recommendations
-@app.route('/recommend', methods=['GET'])
-def recommend():
-    if 'user_id' not in session:
-        return {"recommendations":[]}
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT skills.id, skills.title, users.name FROM skills JOIN users ON skills.user_id=users.id LIMIT 5")
-    results = cur.fetchall()
-    cur.close()
-    recommendations = [{"skill_id":r[0],"title":r[1],"owner":r[2]} for r in results]
-    return {"recommendations": recommendations}
-
-if __name__ == '__main__':
+if __name__=="__main__":
+    if not os.path.exists('static/qr'):
+        os.makedirs('static/qr')
     app.run(debug=True)
