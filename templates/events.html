@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Events - SkillConnect AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Events</h1>
+        <nav>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/create_event">Create Event</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <main>
+        {% for event in events %}
+        <div class="event-card">
+            <h3>{{ event[1] }}</h3>
+            <p>Date: {{ event[2] }} | Time: {{ event[3] }} | Duration: {{ event[4] }}</p>
+            <p>Location: {{ event[5] }} | Price: ${{ event[6] }} | Skills: {{ event[8] }}</p>
+            <p>Instructor: {{ event[9] }}</p>
+        </div>
+        {% endfor %}
+    </main>
+</body>
+</html>
