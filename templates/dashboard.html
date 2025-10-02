@@ -1,35 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Dashboard - SkillConnect AI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 <body>
     <header>
-        <h1>SkillConnect AI Dashboard</h1>
+        <h1>Dashboard</h1>
         <nav>
+            <a href="/skills">Browse Skills</a>
+            <a href="/events">Events</a>
             <a href="/logout">Logout</a>
         </nav>
     </header>
-
     <main>
-        <h2>Welcome {{ role }}</h2>
-
-        {% if role == 'skill_owner' %}
-            <a href="/add_skill">Add New Skill</a>
-            <h3>Your Skills & Events</h3>
-            <div id="skill-list"></div>
-        {% else %}
-            <h3>Recommended Skill Owners</h3>
-            <div id="recommendations"></div>
-        {% endif %}
-
-        <h3>AI Chatbot</h3>
-        <div id="chatbot-container">
-            <div id="chat-window"></div>
-            <input type="text" id="chat-input" placeholder="Ask me anything...">
-            <button onclick="sendMessage()">Send</button>
+        <h2>Welcome to Your Dashboard</h2>
+        <div class="stats">
+            <p>Total Sessions: {{ total_sessions }}</p>
+            <p>Total Spent: ${{ total_spent }}</p>
+            <p>Skills Learned: {{ skills_learned }}</p>
         </div>
     </main>
 </body>
