@@ -9,3 +9,47 @@ main { padding: 20px; text-align: center; }
 button { background:#007bff; color:white; border:none; padding:5px 10px; cursor:pointer; }
 button:hover { background:#0056b3; }
 div { margin:10px 0; }
+
+.auth-container button { padding:10px 20px; width:100%; }
+
+.skill-card, .event-card {
+  border: 1px solid #e0e0e0;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.skill-card h3, .event-card h3 { margin: 0 0 8px 0; }
+.skill-card p, .event-card p { margin: 4px 0; }
+.skill-card button, .event-card button {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  background: #007bff;
+  color: white;
+}
+.container { max-width: 1000px; margin: 20px auto; padding: 0 16px; }
+
+/* dashboard stats */
+.stats { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; }
+.stats p { background:#f7f9fc; padding:12px 16px; border-radius:8px; flex:1; }
+
+/* profile layout */
+.profile-header { display:flex; align-items:center; gap:20px; }
+.profile-header .avatar { width:72px; height:72px; border-radius:50%; background:#ddd; display:flex; align-items:center; justify-content:center; font-size:24px; color:#333; }
+.profile-columns { display:flex; gap:24px; margin-top:16px; }
+.profile-columns .col { flex:1; }
+
+/* chat */
+#chat-window p { padding:6px 8px; border-radius:6px; margin:6px 0; }
+#chat-window p strong { display:block; font-weight:700; }
+
+/* responsive */
+@media (max-width:700px) {
+  .profile-columns { flex-direction:column; }
+  .stats { flex-direction:column; }
+}
+
