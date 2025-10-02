@@ -1,0 +1,8 @@
+<h3>Your Skills</h3>
+{% for skill in skills %}
+<div>
+    <h4>{{ skill[1] }}</h4>
+    <p>{{ skill[2] }}</p>
+    <a href="/add_event/{{ skill[0] }}">Add Event</a>
+</div>
+{% endfor %}
