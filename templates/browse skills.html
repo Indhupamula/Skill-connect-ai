@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Browse Skills - SkillConnect AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</head>
+<body>
+    <header>
+        <h1>Browse Skills</h1>
+        <nav>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/events">Events</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <main>
+        {% for skill in skills %}
+        <div class="skill-card">
+            <h3>{{ skill[1] }}</h3>
+            <p>Category: {{ skill[2] }}</p>
+            <p>Price: ${{ skill[3] }}</p>
+            <p>Rating: {{ skill[4] }}</p>
+            <p>Owner: {{ skill[5] }} ({{ skill[6] }} yrs experience)</p>
+            <button onclick="bookSkill({{ skill[0] }})">Book Session</button>
+        </div>
+        {% endfor %}
+    </main>
+</body>
+</html>
