@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Instructor Profile - SkillConnect AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>{{ instructor[1] }} - Profile</h1>
+        <nav>
+            <a href="/skills">Browse Skills</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <main>
+        <p>Experience: {{ instructor[5] }} years</p>
+        <p>Languages: {{ instructor[6] }}</p>
+        <p>Timezone: {{ instructor[7] }}</p>
+        <p>Education: {{ instructor[8] }}</p>
+        <h3>Skills & Expertise</h3>
+        <ul>
+            {% for skill in skills %}
+            <li>{{ skill[2] }} - ${{ skill[5] }}/hour</li>
+            {% endfor %}
+        </ul>
+    </main>
+</body>
+</html>
