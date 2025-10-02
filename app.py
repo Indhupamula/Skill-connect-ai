@@ -139,13 +139,25 @@ def profile(instructor_id):
     cursor.close()
     return render_template('profile.html', instructor=instructor, skills=skills)
 
-# ---------------- Chatbot ----------------
+import google.generativeai as genai
+import os
+
+# Configure Gemini
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+
 @app.route('/chatbot', methods=['POST'])
 def chatbot():
-    message = request.json['message']
-    # Basic AI simulation for demo
-    reply = f"Echo: {message}"  
-    return jsonify({'reply': reply})
+    data = request.json
+    user_message = data.get("message", "")
+
+    try:
+        model = genai.GenerativeModel("gemini-pro")
+        response = model.generate_content(user_message)
+        bot_reply = response.text
+    except Exception as e:
+        bot_reply = "Sorry, I couldn’t process that. Please try again."
+
+    return jsonify({"reply": bot_reply})
 
 if __name__=="__main__":
     if not os.path.exists('static/qr'):
