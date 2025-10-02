@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Event - SkillConnect AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Create Event</h1>
+        <nav>
+            <a href="/events">Back to Events</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <main>
+        <form method="POST">
+            <input type="text" name="title" placeholder="Event Title" required>
+            <textarea name="description" placeholder="Description" required></textarea>
+            <input type="date" name="date" required>
+            <input type="time" name="time" required>
+            <input type="text" name="duration" placeholder="Duration (e.g., 2 hours)" required>
+            <input type="text" name="location" placeholder="Location" required>
+            <input type="number" name="price" placeholder="Price" required>
+            <input type="number" name="max_participants" placeholder="Max Participants" required>
+            <input type="text" name="skills" placeholder="Skills (comma separated)" required>
+            <button type="submit">Create Event</button>
+        </form>
+    </main>
+</body>
+</html>
